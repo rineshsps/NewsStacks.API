@@ -13,4 +13,4 @@ xUnit
 ## ORM
 EFCore database firt approach.
 
-PM> Scaffold-DbContext "Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=news;Integrated Security=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
+PM> Scaffold-DbContext "Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=news;Integrated Security=True;" Microsoft.EntityFrameworkCore.SqlServer -Force  -OutputDir Models 
