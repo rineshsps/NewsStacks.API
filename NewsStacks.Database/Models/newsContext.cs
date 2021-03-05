@@ -17,7 +17,10 @@ namespace NewsStacks.Database.Models
         {
         }
 
-        public virtual DbSet<Test> Tests { get; set; }
+        public virtual DbSet<Article> Articles { get; set; }
+        public virtual DbSet<Role> Roles { get; set; }
+        public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<UserRole> UserRoles { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -32,15 +35,77 @@ namespace NewsStacks.Database.Models
         {
             modelBuilder.HasAnnotation("Relational:Collation", "SQL_Latin1_General_CP1_CI_AS");
 
-            modelBuilder.Entity<Test>(entity =>
+            modelBuilder.Entity<Article>(entity =>
             {
-                entity.ToTable("test");
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Description).IsRequired();
+
+                entity.Property(e => e.EditorComments)
+                    .HasMaxLength(250)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.ReviewerComments)
+                    .HasMaxLength(250)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Tags).IsRequired();
+
+                entity.Property(e => e.Title)
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.UpdateDate).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<Role>(entity =>
+            {
+                entity.HasIndex(e => e.Name, "IX_Roles")
+                    .IsUnique();
 
                 entity.Property(e => e.Name)
-                    .HasMaxLength(10)
-                    .IsFixedLength(true);
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasIndex(e => e.UserName, "IX_Users_Unique")
+                    .IsUnique();
+
+                entity.Property(e => e.Dndactive).HasColumnName("DNDActive");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Password)
+                    .IsRequired()
+                    .HasMaxLength(25)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.UserName)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsUnicode(false);
+            });
+
+            modelBuilder.Entity<UserRole>(entity =>
+            {
+                entity.HasOne(d => d.User)
+                    .WithMany(p => p.UserRoles)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_UserRoles_Roles");
+
+                entity.HasOne(d => d.UserNavigation)
+                    .WithMany(p => p.UserRoles)
+                    .HasForeignKey(d => d.UserId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_UserRoles_User");
             });
 
             OnModelCreatingPartial(modelBuilder);
