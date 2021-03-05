@@ -22,21 +22,17 @@ namespace NewsStacks.API.Controllers
         }
 
         // GET: api/Article
-
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Article>>> GetArticles()
+        public async Task<ActionResult<IEnumerable<Article>>> GetArticles(bool published = false)
         {
-
-            return await _context.Articles.ToListAsync();
+            return await _context.Articles.Where(x => x.Active == true && x.PublishDone == published).ToListAsync();
         }
 
         // GET: api/Article/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Article>> GetArticle(int id)
         {
-
-
-            var article = await _context.Articles.FindAsync(id);
+            var article = await _context.Articles.Where(x => x.Active == true && x.Id == id).FirstOrDefaultAsync();
 
             if (article == null)
             {
@@ -105,7 +101,8 @@ namespace NewsStacks.API.Controllers
                 return NotFound();
             }
 
-            _context.Articles.Remove(article);
+            article.Active = false;
+            _context.Entry(article).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();

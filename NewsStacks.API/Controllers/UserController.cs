@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NewsStacks.Database.Models;
 using System;
@@ -16,35 +17,38 @@ namespace NewsStacks.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly newsContext _context;
+        private readonly ILogger<UserController> _logger;
 
-        public UserController(newsContext context)
+        public UserController(newsContext context, ILogger<UserController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpPost("Authenticate")]
         public async Task<IActionResult> Authenticate(string userName = "admin", string password = "password")
         {
-            var user = _context.Users.Include(x => x.UserRoles).Where(x => x.UserName == userName && x.Password == password).FirstOrDefault();
+            try
+            {
+                var user = _context.Users.Include(x => x.UserRoles).Where(x => x.UserName == userName && x.Password == password).FirstOrDefault();
 
-            if (user != null)
-            {
-                var tokenString = GenerateJSONWebToken(user);
-                return Ok(tokenString);
+                if (user != null)
+                {
+                    var tokenString = GenerateJSONWebToken(user);
+                    return Ok(tokenString);
+                }
+                else
+                {
+                    _logger.LogWarning($"User {userName} Not Found");
+
+                    return NotFound();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Failed to Authenticate");
+                throw;
             }
-            // public string UserName { get; set; }
-            //public string Password { get; set; }
-            //IActionResult response = Unauthorized();
-            //var user = await AuthenticateUser(data);
-            //if (data != null)
-            //{
-            //    var tokenString = GenerateJSONWebToken(user);
-            //    response = Ok(new { Token = tokenString, Message = "Success" });
-            //}
 
         }
 

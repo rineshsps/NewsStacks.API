@@ -32,13 +32,20 @@ namespace NewsStacks.API.Attribute
             var user = context.HttpContext.Items["Name"];
             var permissionResult = false;
 
-            var authorizationToken = context.HttpContext.Request.Headers["Authorization"][0].Split("Bearer ");
-            if (authorizationToken != null && authorizationToken.Length > 1)
+            if (context.HttpContext.Request.Headers["Authorization"].Count > 0)
             {
-                var token = authorizationToken[1];
-                var validated = ValidateJWT(token, out permissionResult);
+                var authorizationToken = context.HttpContext.Request.Headers["Authorization"][0].Split("Bearer ");
+                if (authorizationToken != null && authorizationToken.Length > 1)
+                {
+                    var token = authorizationToken[1];
+                    var validated = ValidateJWT(token, out permissionResult);
 
-                if (!permissionResult)
+                    if (!permissionResult)
+                    {
+                        context.Result = new UnauthorizedResult();
+                    }
+                }
+                else
                 {
                     context.Result = new UnauthorizedResult();
                 }
