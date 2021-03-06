@@ -1,23 +1,27 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NewsStacks.Database.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using NewsStacks.Database.Models;
 
 namespace NewsStacks.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UserRoleController : ControllerBase
     {
         private readonly newsContext _context;
+        private readonly ILogger<UserRoleController> _logger;
 
-        public UserRoleController(newsContext context)
+        public UserRoleController(newsContext context, ILogger<UserRoleController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/UserRole
@@ -77,10 +81,21 @@ namespace NewsStacks.API.Controllers
         [HttpPost]
         public async Task<ActionResult<UserRole>> PostUserRole(UserRole userRole)
         {
-            _context.UserRoles.Add(userRole);
-            await _context.SaveChangesAsync();
+            try
+            {
 
-            return CreatedAtAction("GetUserRole", new { id = userRole.Id }, userRole);
+                _context.UserRoles.Add(userRole);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction("GetUserRole", new { id = userRole.Id }, userRole);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to Save user Roles");
+
+                return BadRequest();
+            }
+
         }
 
         // DELETE: api/UserRole/5

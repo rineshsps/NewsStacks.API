@@ -18,6 +18,7 @@ namespace NewsStacks.Database.Models
         }
 
         public virtual DbSet<Article> Articles { get; set; }
+        public virtual DbSet<ArticleUser> ArticleUsers { get; set; }
         public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<UserRole> UserRoles { get; set; }
@@ -37,6 +38,11 @@ namespace NewsStacks.Database.Models
 
             modelBuilder.Entity<Article>(entity =>
             {
+                entity.Property(e => e.Category)
+                    .IsRequired()
+                    .HasMaxLength(25)
+                    .IsUnicode(false);
+
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.Description).IsRequired();
@@ -44,6 +50,8 @@ namespace NewsStacks.Database.Models
                 entity.Property(e => e.EditorComments)
                     .HasMaxLength(250)
                     .IsUnicode(false);
+
+                entity.Property(e => e.PublishedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.ReviewerComments)
                     .HasMaxLength(250)
@@ -57,6 +65,28 @@ namespace NewsStacks.Database.Models
                     .IsUnicode(false);
 
                 entity.Property(e => e.UpdateDate).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<ArticleUser>(entity =>
+            {
+                entity.HasIndex(e => new { e.UserRoleId, e.ArticleId }, "IX_ArticleUsers")
+                    .IsUnique();
+
+                entity.Property(e => e.CreatedDate).HasColumnType("datetime");
+
+                entity.Property(e => e.UpdatedDate).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Article)
+                    .WithMany(p => p.ArticleUsers)
+                    .HasForeignKey(d => d.ArticleId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_ArticleUsers_Articles");
+
+                entity.HasOne(d => d.UserRole)
+                    .WithMany(p => p.ArticleUsers)
+                    .HasForeignKey(d => d.UserRoleId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_ArticleUsers_UserRoles");
             });
 
             modelBuilder.Entity<Role>(entity =>
@@ -95,13 +125,16 @@ namespace NewsStacks.Database.Models
 
             modelBuilder.Entity<UserRole>(entity =>
             {
-                entity.HasOne(d => d.User)
+                entity.HasIndex(e => new { e.RoleId, e.UserId }, "IX_UserRoles")
+                    .IsUnique();
+
+                entity.HasOne(d => d.Role)
                     .WithMany(p => p.UserRoles)
-                    .HasForeignKey(d => d.UserId)
+                    .HasForeignKey(d => d.RoleId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_UserRoles_Roles");
 
-                entity.HasOne(d => d.UserNavigation)
+                entity.HasOne(d => d.User)
                     .WithMany(p => p.UserRoles)
                     .HasForeignKey(d => d.UserId)
                     .OnDelete(DeleteBehavior.ClientSetNull)

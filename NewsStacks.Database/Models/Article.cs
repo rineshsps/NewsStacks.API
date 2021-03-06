@@ -7,10 +7,16 @@ namespace NewsStacks.Database.Models
 {
     public partial class Article
     {
+        public Article()
+        {
+            ArticleUsers = new HashSet<ArticleUser>();
+        }
+
         public int Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         public string Tags { get; set; }
+        public string Category { get; set; }
         public bool IsDraft { get; set; }
         public bool WriteDone { get; set; }
         public bool ReviewerDone { get; set; }
@@ -21,5 +27,9 @@ namespace NewsStacks.Database.Models
         public bool Active { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime UpdateDate { get; set; }
+        public DateTime? PublishedDate { get; set; }
+        public int Likes { get; set; }
+
+        public virtual ICollection<ArticleUser> ArticleUsers { get; set; }
     }
 }
