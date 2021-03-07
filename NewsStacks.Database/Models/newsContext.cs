@@ -38,11 +38,6 @@ namespace NewsStacks.Database.Models
 
             modelBuilder.Entity<Article>(entity =>
             {
-                entity.Property(e => e.Category)
-                    .IsRequired()
-                    .HasMaxLength(25)
-                    .IsUnicode(false);
-
                 entity.Property(e => e.CreatedDate).HasColumnType("datetime");
 
                 entity.Property(e => e.Description).IsRequired();
@@ -62,6 +57,11 @@ namespace NewsStacks.Database.Models
                 entity.Property(e => e.Title)
                     .IsRequired()
                     .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Topics)
+                    .IsRequired()
+                    .HasMaxLength(25)
                     .IsUnicode(false);
 
                 entity.Property(e => e.UpdateDate).HasColumnType("datetime");

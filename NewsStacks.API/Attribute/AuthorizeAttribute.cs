@@ -86,22 +86,6 @@ namespace NewsStacks.API.Attribute
                     principal = tokenHandler.ValidateToken(token.RawData, tokenValidationParameters, out validatedToken);
                     ClaimsIdentity identity = (ClaimsIdentity)principal.Identity;
 
-                    //if (!authorizedToken)
-                    //{
-                    //    Claim DataExtractionClaim = identity.FindFirst("dataextraction");
-                    //    if (DataExtractionClaim != null)
-                    //    {
-                    //        var canExtract = JsonSerializer.Deserialize<PermissionToken>(DataExtractionClaim.Value);
-                    //        if (canExtract.can_schedule_and_extract)
-                    //        {
-                    //            validated = true;
-                    //        }
-                    //    }
-                    //}
-                    //else
-                    //{
-                    //    validated = true;
-                    //}
                     permissionResult = true;
                     errorMessage = "";
                 }

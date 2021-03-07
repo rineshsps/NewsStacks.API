@@ -83,7 +83,6 @@ namespace NewsStacks.API.Controllers
         {
             try
             {
-
                 _context.UserRoles.Add(userRole);
                 await _context.SaveChangesAsync();
 

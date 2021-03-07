@@ -35,16 +35,21 @@ namespace NewsStacks.API.Controllers
 
         // GET: api/Article
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Article>>> GetArticles(bool published = false)
+        public async Task<ActionResult<IEnumerable<ArticleDisplayDTO>>> GetArticles(bool published = false)
         {
             var role = User.FindFirst(ClaimTypes.Role).Value;
 
             if (Convert.ToInt32(role) == (int)RoleType.Reader)
             {
-                return await _context.Articles.Where(x => x.Active == true && x.PublishDone == true).OrderByDescending(x => x.PublishedDate).ToListAsync();
+                var articlesReader = await _context.Articles.Where(x => x.Active == true && x.PublishDone == true).OrderByDescending(x => x.PublishedDate).ToListAsync();
+                var modelReader = _mapper.Map<List<ArticleDisplayDTO>>(articlesReader);
+
+                return modelReader;
             }
 
-            return await _context.Articles.Where(x => x.Active == true && x.PublishDone == published).ToListAsync();
+            var articles = await _context.Articles.Where(x => x.Active == true && x.PublishDone == published).ToListAsync();
+            var model = _mapper.Map<List<ArticleDisplayDTO>>(articles);
+            return model;
         }
 
         // GET: api/Article/5
@@ -180,6 +185,8 @@ namespace NewsStacks.API.Controllers
                     _context.Articles.Add(article);
                     await _context.SaveChangesAsync();
 
+                    _logger.LogInformation($"Article saved.");
+
                     //Save user information in Article role table 
                     var userRole = _context.UserRoles.Where(x => x.UserId == Convert.ToInt32(userId) && x.RoleId == Convert.ToInt32(role)).FirstOrDefault();
 
@@ -195,15 +202,21 @@ namespace NewsStacks.API.Controllers
 
                         _context.ArticleUsers.Add(articleUser);
                         await _context.SaveChangesAsync();
+
+                        _logger.LogInformation($"Article Role {userRole.Id} saved.");
+
                     };
 
                     //Article message Queue 
-
-                    ArticleNotification(article);
+                    var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.WriterDone };
+                    ArticleNotification(message);
+                    _logger.LogInformation($"Article Notification message added.");
 
                 }
                 else
                 {
+                    _logger.LogInformation($"Article created Unauthorized.");
+
                     return Unauthorized();
                 }
 
@@ -218,13 +231,13 @@ namespace NewsStacks.API.Controllers
             }
         }
 
-        private static void ArticleNotification(Article article)
+        private static void ArticleNotification(ArticleMessage message)
         {
             CloudStorageAccount storageAccount = CloudStorageAccount.Parse("UseDevelopmentStorage=true");
             CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
             CloudQueue queue = queueClient.GetQueueReference("qa1");
             queue.CreateIfNotExistsAsync();
-            string messsage = JsonSerializer.Serialize(new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.WriterDone });
+            string messsage = JsonSerializer.Serialize(message);
             queue.AddMessageAsync(new CloudQueueMessage(messsage));
         }
 

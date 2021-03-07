@@ -10,6 +10,8 @@ namespace NewsStacks.API.AutoMapper
         {
             CreateMap<ArticleDTO, Article>();
             CreateMap<Article, ArticleDisplayDTO>();
+            CreateMap<RegistrationDTO, User>();
+            CreateMap<User, RegistrationDTO>();
         }
     }
 }

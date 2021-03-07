@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NewsStacks.Database.Models;
+using NewsStacks.DTOs;
+using NewsStacks.DTOs.Enum;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -22,29 +25,35 @@ namespace NewsStacks.API.Controllers
     {
         private readonly newsContext _context;
         private readonly ILogger<UserController> _logger;
+        private readonly IMapper _mapper;
 
-        public UserController(newsContext context, ILogger<UserController> logger)
+        public UserController(newsContext context, ILogger<UserController> logger, IMapper mapper)
         {
             _context = context;
             _logger = logger;
+            _mapper = mapper;
         }
 
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [AllowAnonymous]
         [HttpPost("Register")]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult> PostUser(RegistrationDTO registration)
         {
             try
             {
+                var user = _mapper.Map<User>(registration);
+                user.Active = true;
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction("GetUser", new { id = user.Id }, user);
+                var model = _mapper.Map<RegistrationDTO>(user);
+
+                return CreatedAtAction("GetUser", new { id = user.Id }, model);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to User registration");
-                //return BadRequest();
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
@@ -158,14 +167,8 @@ namespace NewsStacks.API.Controllers
 
             var role = user.UserRoles.FirstOrDefault();
             var roleid = "";
-            if (role == null)
-            {
-                roleid = "3";
-            }
-            else
-            {
-                roleid = role.RoleId.ToString();
-            }
+
+            roleid = role == null ? Convert.ToInt32(RoleType.Reader).ToString() : role.RoleId.ToString();
 
             var claims = new[]
             {
@@ -173,8 +176,6 @@ namespace NewsStacks.API.Controllers
                 new Claim("UserName", user.UserName),
                 new Claim(ClaimTypes.Role, roleid),
                 new Claim(ClaimTypes.Name, user.Name),
-                //new Claim("Name", "User1"),
-                //new Claim("Role", "Admin1"),
                 new Claim("sessionId", Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
              };

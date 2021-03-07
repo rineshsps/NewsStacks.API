@@ -5,6 +5,7 @@
         WriterDone = 1,
         ReviewerDone = 2,
         EditorDone = 3,
-        PublisherDone = 4
+        PublisherDone = 4,
+        ReviewerReject = 5
     }
 }
