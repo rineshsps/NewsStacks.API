@@ -7,7 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using NewsStacks.BusinessService;
 using NewsStacks.Database.Models;
+using NewsStacks.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -30,6 +32,11 @@ namespace NewsStacks.API
             services.AddAutoMapper(typeof(Startup));
 
             services.AddControllers();
+
+            //DI resolve
+            services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IRoleRepository, RoleRepository>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "NewsStacks.API", Version = "v1" });

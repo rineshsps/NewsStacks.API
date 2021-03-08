@@ -4,4 +4,9 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\NewsStacks.Database\NewsStacks.Database.csproj" />
+    <ProjectReference Include="..\NewsStacks.Repositories\NewsStacks.Repositories.csproj" />
+  </ItemGroup>
+
 </Project>

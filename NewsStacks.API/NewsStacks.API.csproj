@@ -28,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NewsStack.BusinessService\NewsStacks.BusinessService.csproj" />
     <ProjectReference Include="..\NewsStacks.Database\NewsStacks.Database.csproj" />
     <ProjectReference Include="..\NewsStacks.DTOs\NewsStacks.DTOs.csproj" />
   </ItemGroup>
