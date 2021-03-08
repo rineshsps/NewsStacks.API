@@ -71,7 +71,6 @@ namespace NewsStacks.API
                 });
             });
 
-
             //database config
             services.AddDbContext<newsContext>
            (options => options.UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=news;Integrated Security=True;", x => x.CommandTimeout(1000))
