@@ -2,6 +2,6 @@
 {
     public static class Common
     {
-        public static string JsonExtension = ".json";
+        public static string queuename = "qa1";
     }
 }

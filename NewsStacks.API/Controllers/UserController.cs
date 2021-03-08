@@ -148,7 +148,9 @@ namespace NewsStacks.API.Controllers
                 return NotFound();
             }
 
+            user.Active = false;
             _context.Users.Remove(user);
+            _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();
