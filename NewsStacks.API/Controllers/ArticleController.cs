@@ -86,48 +86,112 @@ namespace NewsStacks.API.Controllers
             {
                 if (id != article.Id)
                 {
-                    _logger.LogError($"Id {id} and articlde id {article.Id} mismatch ");
+                    _logger.LogError($"Id {id} and article id {article.Id} mismatch ");
 
                     return BadRequest();
                 }
 
                 var role = User.FindFirst(ClaimTypes.Role).Value;
+                var userId = User.FindFirst("Id").Value;
+
+                var model = await _context.Articles.Where(x => x.Active == true && x.Id == id & x.PublishDone == false).FirstOrDefaultAsync();
+
+                if (model == null)
+                {
+                    _logger.LogError($"Article is not available/ is published ");
+
+                    return BadRequest();
+                }
 
                 if (Convert.ToInt32(role) == (int)RoleType.Writer)
                 {
-                    article.WriteDone = true;
-                    article.ReviewerDone = false;
-                    article.EditorDone = false;
-                    article.PublishDone = false;
-                    article.UpdateDate = DateTime.UtcNow;
-                    article.PublishedDate = null;
-                    article.ReviewerComments = null;
-                    article.EditorComments = null;
+                    if (model.WriteDone)
+                    {
+                        _logger.LogInformation($"Article Write completed already.");
+                        return Ok();
+                    }
+
+                    model.Title = article.Title;
+                    model.Description = article.Description;
+                    model.Topics = article.Topics;
+                    model.Tags = article.Tags;
+                    model.UpdateDate = DateTime.UtcNow;
+                    model.WriteDone = false;
+
+                    if (!article.IsDraft)
+                    {
+                        model.WriteDone = true;
+                        //Article message Queue 
+                        var message = new ArticleMessage { Id = model.Id, Title = model.Title, MessageType = MessageType.WriterDone };
+                        ArticleNotification(message);
+                        _logger.LogInformation($"Article Notification message Writer added.");
+                    }
+
+                    await SaveArticleUser(role, userId, article.Id);
+
                 }
                 else if (Convert.ToInt32(role) == (int)RoleType.Reviewer)
                 {
-                    article.ReviewerDone = true;
-                    article.EditorDone = false;
-                    article.PublishDone = false;
-                    article.UpdateDate = DateTime.UtcNow;
-                    article.PublishedDate = null;
-                    article.ReviewerComments = null;
+                    if (model.ReviewerDone)
+                    {
+                        _logger.LogInformation($"Article Reviewer completed already.");
+                        return Ok();
+                    }
+
+
+                    model.ReviewerDone = true;
+                    model.UpdateDate = DateTime.UtcNow;
+
+                    //Article message Queue 
+                    var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.ReviewerDone };
+                    ArticleNotification(message);
+                    _logger.LogInformation($"Article Notification message Reviewer added.");
+
+                    await SaveArticleUser(role, userId, article.Id);
+
                 }
                 else if (Convert.ToInt32(role) == (int)RoleType.Editor)
                 {
-                    article.EditorDone = true;
-                    article.PublishDone = false;
-                    article.UpdateDate = DateTime.UtcNow;
-                    article.PublishedDate = null;
+                    if (model.EditorDone)
+                    {
+                        _logger.LogInformation($"Article Reviewer completed already.");
+                        return Ok();
+                    }
+
+                    model.EditorDone = true;
+                    model.UpdateDate = DateTime.UtcNow;
+                    model.EditorComments = article.EditorComments;
+                    //Article message Queue 
+                    var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.EditorDone };
+                    ArticleNotification(message);
+                    _logger.LogInformation($"Article Notification message Editor added.");
+
+                    await SaveArticleUser(role, userId, article.Id);
+
                 }
                 else if (Convert.ToInt32(role) == (int)RoleType.Publisher)
                 {
-                    article.PublishDone = true;
-                    article.UpdateDate = DateTime.UtcNow;
-                    article.PublishedDate = DateTime.UtcNow;
+                    if (model.PublishDone)
+                    {
+                        _logger.LogInformation($"Article Reviewer completed already.");
+                        return Ok();
+                    }
+
+                    model.PublishDone = true;
+                    model.UpdateDate = DateTime.UtcNow;
+                    model.PublishedDate = DateTime.UtcNow;
+                    model.Tags = article.Tags;
+
+                    //Article message Queue 
+                    var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.PublisherDone };
+                    ArticleNotification(message);
+                    _logger.LogInformation($"Article Notification message Publisher added.");
+
+                    await SaveArticleUser(role, userId, article.Id);
+
                 }
 
-                _context.Entry(article).State = EntityState.Modified;
+                _context.Entry(model).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException ex)
@@ -188,29 +252,15 @@ namespace NewsStacks.API.Controllers
                     _logger.LogInformation($"Article saved.");
 
                     //Save user information in Article role table 
-                    var userRole = _context.UserRoles.Where(x => x.UserId == Convert.ToInt32(userId) && x.RoleId == Convert.ToInt32(role)).FirstOrDefault();
-
-                    if (userRole != null)
-                    {
-                        var articleUser = new ArticleUser
-                        {
-                            ArticleId = article.Id,
-                            UserRoleId = userRole.Id,
-                            CreatedDate = DateTime.UtcNow,
-                            UpdatedDate = DateTime.UtcNow
-                        };
-
-                        _context.ArticleUsers.Add(articleUser);
-                        await _context.SaveChangesAsync();
-
-                        _logger.LogInformation($"Article Role {userRole.Id} saved.");
-
-                    };
+                    await SaveArticleUser(role, userId, article.Id);
 
                     //Article message Queue 
-                    var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.WriterDone };
-                    ArticleNotification(message);
-                    _logger.LogInformation($"Article Notification message added.");
+                    if (!article.IsDraft)
+                    {
+                        var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.WriterDone };
+                        ArticleNotification(message);
+                        _logger.LogInformation($"Article Notification message added.");
+                    }
 
                 }
                 else
@@ -229,6 +279,28 @@ namespace NewsStacks.API.Controllers
 
                 return BadRequest();
             }
+        }
+
+        private async Task SaveArticleUser(string role, string userId, int articleId)
+        {
+            var userRole = _context.UserRoles.Where(x => x.UserId == Convert.ToInt32(userId) && x.RoleId == Convert.ToInt32(role)).FirstOrDefault();
+
+            if (userRole != null)
+            {
+                var articleUser = new ArticleUser
+                {
+                    ArticleId = articleId,
+                    UserRoleId = userRole.Id,
+                    CreatedDate = DateTime.UtcNow,
+                    UpdatedDate = DateTime.UtcNow
+                };
+
+                _context.ArticleUsers.Add(articleUser);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Article Role {userRole.Id} saved.");
+
+            };
         }
 
         private static void ArticleNotification(ArticleMessage message)

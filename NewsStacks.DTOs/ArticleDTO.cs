@@ -12,7 +12,7 @@ namespace NewsStacks.DTOs
         public string Description { get; set; }
         [Required]
         [MinLength(2), MaxLength(25)]
-        public string Category { get; set; }
+        public string Topics { get; set; }
         [Required]
         [MinLength(2)]
         public string Tags { get; set; }
