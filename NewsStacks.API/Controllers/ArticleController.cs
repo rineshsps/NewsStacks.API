@@ -82,16 +82,18 @@ namespace NewsStacks.API.Controllers
         // PUT: api/Article/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutArticle(int id, Article article)
+        public async Task<IActionResult> PutArticle(int id, ArticleUpdateDTO articleDTO)
         {
             try
             {
-                if (id != article.Id)
+                if (id != articleDTO.Id)
                 {
-                    _logger.LogError($"Id {id} and article id {article.Id} mismatch ");
+                    _logger.LogError($"Id {id} and article id {articleDTO.Id} mismatch ");
 
                     return BadRequest();
                 }
+
+                var article = _mapper.Map<Article>(articleDTO);
 
                 var role = User.FindFirst(ClaimTypes.Role).Value;
                 var userId = User.FindFirst("Id").Value;
@@ -110,9 +112,9 @@ namespace NewsStacks.API.Controllers
                 return Ok(article);
 
             }
-            catch (DbUpdateConcurrencyException ex)
+            catch (Exception ex)
             {
-                _logger.LogError(ex, $"Articlde id {id} not found ");
+                _logger.LogError(ex, $"Articlde {id} update failed");
                 return BadRequest();
             }
 

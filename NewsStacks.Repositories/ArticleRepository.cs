@@ -29,7 +29,7 @@ namespace NewsStacks.Repositories
         {
             var userRole = _context.UserRoles.Where(x => x.UserId == Convert.ToInt32(userId) && x.RoleId == Convert.ToInt32(role)).FirstOrDefault();
 
-            if (userRole != null)
+            if (userRole == null)
             {
                 var articleUser = new ArticleUser
                 {

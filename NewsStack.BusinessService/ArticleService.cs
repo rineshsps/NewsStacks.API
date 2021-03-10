@@ -109,6 +109,8 @@ namespace NewsStacks.BusinessService
 
                 await _repository.CreateArticleUser(role, userId, article.Id);
 
+                await _repository.Update(id, model, role, userId);
+
                 if (!article.IsDraft)
                 {
                     model.WriteDone = true;
@@ -131,6 +133,8 @@ namespace NewsStacks.BusinessService
 
                 await _repository.CreateArticleUser(role, userId, article.Id);
 
+                await _repository.Update(id, model, role, userId);
+
                 //Article message Queue 
                 var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.ReviewerDone };
                 this.CreateArticleNotification(message);
@@ -147,6 +151,8 @@ namespace NewsStacks.BusinessService
                 model.UpdateDate = DateTime.UtcNow;
                 model.EditorComments = article.EditorComments;
                 await _repository.CreateArticleUser(role, userId, article.Id);
+
+                await _repository.Update(id, model, role, userId);
 
                 //Article message Queue 
                 var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.EditorDone };
@@ -167,18 +173,15 @@ namespace NewsStacks.BusinessService
 
                 await _repository.CreateArticleUser(role, userId, article.Id);
 
+                await _repository.Update(id, model, role, userId);
+
                 //Article message Queue 
                 var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.PublisherDone };
                 this.CreateArticleNotification(message);
             }
 
-            return await _repository.Update(id, article, role, userId);
+            return model;
         }
 
-        //public static void GetArticleUsersByRoleAsync(int id, string role)
-        //{
-        //    var rol = _repository.GetById(id, role);
-
-        //}
     }
 }
