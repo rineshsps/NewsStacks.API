@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NewsStacks.Database.Models;
+using NewsStacks.DTOs.Enum;
+using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace NewsStacks.API.Controllers
@@ -41,6 +44,47 @@ namespace NewsStacks.API.Controllers
             }
 
             return userRole;
+        }
+
+
+        // POST: api/UserRole
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost("UserRoleAssign")]
+        public async Task<ActionResult<UserRole>> PostUserRole(int UserId, int RoleId)
+        {
+            try
+            {
+                var role = User.FindFirst(ClaimTypes.Role).Value;
+                var user = new UserRole();
+                if (Convert.ToInt32(role) == (int)RoleType.Admin)
+                {
+                    user = new UserRole
+                    {
+                        Active = true,
+                        RoleId = RoleId,
+                        UserId = UserId
+                    };
+
+                    _context.UserRoles.Add(user);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    return Unauthorized();
+                }
+
+                return CreatedAtAction("GetUserRole", new
+                {
+                    id = user.Id
+                }, user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to Save user Roles");
+
+                return BadRequest();
+            }
+
         }
     }
 }
