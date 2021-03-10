@@ -2,9 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Queue;
 using NewsStacks.API.Attribute;
+using NewsStacks.BusinessService;
 using NewsStacks.Database.Models;
 using NewsStacks.DTOs;
 using NewsStacks.DTOs.Enum;
@@ -12,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace NewsStacks.API.Controllers
@@ -25,56 +23,60 @@ namespace NewsStacks.API.Controllers
         private readonly newsContext _context;
         private readonly ILogger<ArticleController> _logger;
         private readonly IMapper _mapper;
+        private readonly IArticleService _service;
 
-        public ArticleController(newsContext context, ILogger<ArticleController> logger, IMapper mapper)
+        public ArticleController(newsContext context, ILogger<ArticleController> logger, IMapper mapper, IArticleService service)
         {
             _context = context;
             _logger = logger;
             _mapper = mapper;
+            _service = service;
         }
 
         // GET: api/Article
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ArticleDisplayDTO>>> GetArticles(bool published = false)
         {
-            var role = User.FindFirst(ClaimTypes.Role).Value;
-
-            if (Convert.ToInt32(role) == (int)RoleType.Reader)
+            try
             {
-                var articlesReader = await _context.Articles.Where(x => x.Active == true && x.PublishDone == true).OrderByDescending(x => x.PublishedDate).ToListAsync();
-                var modelReader = _mapper.Map<List<ArticleDisplayDTO>>(articlesReader);
+                var role = User.FindFirst(ClaimTypes.Role).Value;
 
-                return modelReader;
+                var articles = await _service.GetAll(role, published);
+                var model = _mapper.Map<List<ArticleDisplayDTO>>(articles);
+                return model;
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to get Articles");
 
-            var articles = await _context.Articles.Where(x => x.Active == true && x.PublishDone == published).ToListAsync();
-            var model = _mapper.Map<List<ArticleDisplayDTO>>(articles);
-            return model;
+                return BadRequest();
+            }
         }
 
         // GET: api/Article/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Article>> GetArticle(int id)
         {
-            var role = User.FindFirst(ClaimTypes.Role).Value;
-
-            var article = new Article { };
-
-            if (Convert.ToInt32(role) == (int)RoleType.Reader)
+            try
             {
-                article = await _context.Articles.Where(x => x.Active == true && x.Id == id & x.PublishDone == true).FirstOrDefaultAsync();
+                var role = User.FindFirst(ClaimTypes.Role).Value;
+
+                var article = await _service.GetById(id, role);
+
+                if (article == null)
+                {
+                    return NotFound();
+                }
+
+                return article;
             }
-            else
+            catch (Exception ex)
             {
-                article = await _context.Articles.Where(x => x.Active == true && x.Id == id).FirstOrDefaultAsync();
+                _logger.LogError(ex, $"Failed to get Articles");
+
+                return BadRequest();
             }
 
-            if (article == null)
-            {
-                return NotFound();
-            }
-
-            return article;
         }
 
         // PUT: api/Article/5
@@ -103,110 +105,15 @@ namespace NewsStacks.API.Controllers
                     return BadRequest();
                 }
 
-                if (Convert.ToInt32(role) == (int)RoleType.Writer)
-                {
-                    if (model.WriteDone)
-                    {
-                        _logger.LogInformation($"Article Write completed already.");
-                        return Ok();
-                    }
+                await _service.Update(id, article, role, userId);
 
-                    model.Title = article.Title;
-                    model.Description = article.Description;
-                    model.Topics = article.Topics;
-                    model.Tags = article.Tags;
-                    model.UpdateDate = DateTime.UtcNow;
-                    model.WriteDone = false;
+                return Ok(article);
 
-                    if (!article.IsDraft)
-                    {
-                        model.WriteDone = true;
-                        //Article message Queue 
-                        var message = new ArticleMessage { Id = model.Id, Title = model.Title, MessageType = MessageType.WriterDone };
-                        ArticleNotification(message);
-                        _logger.LogInformation($"Article Notification message Writer added.");
-                    }
-
-                    await SaveArticleUser(role, userId, article.Id);
-
-                }
-                else if (Convert.ToInt32(role) == (int)RoleType.Reviewer)
-                {
-                    if (model.ReviewerDone)
-                    {
-                        _logger.LogInformation($"Article Reviewer completed already.");
-                        return Ok();
-                    }
-
-
-                    model.ReviewerDone = true;
-                    model.UpdateDate = DateTime.UtcNow;
-
-                    //Article message Queue 
-                    var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.ReviewerDone };
-                    ArticleNotification(message);
-                    _logger.LogInformation($"Article Notification message Reviewer added.");
-
-                    await SaveArticleUser(role, userId, article.Id);
-
-                }
-                else if (Convert.ToInt32(role) == (int)RoleType.Editor)
-                {
-                    if (model.EditorDone)
-                    {
-                        _logger.LogInformation($"Article Reviewer completed already.");
-                        return Ok();
-                    }
-
-                    model.EditorDone = true;
-                    model.UpdateDate = DateTime.UtcNow;
-                    model.EditorComments = article.EditorComments;
-                    //Article message Queue 
-                    var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.EditorDone };
-                    ArticleNotification(message);
-                    _logger.LogInformation($"Article Notification message Editor added.");
-
-                    await SaveArticleUser(role, userId, article.Id);
-
-                }
-                else if (Convert.ToInt32(role) == (int)RoleType.Publisher)
-                {
-                    if (model.PublishDone)
-                    {
-                        _logger.LogInformation($"Article Reviewer completed already.");
-                        return Ok();
-                    }
-
-                    model.PublishDone = true;
-                    model.UpdateDate = DateTime.UtcNow;
-                    model.PublishedDate = DateTime.UtcNow;
-                    model.Tags = article.Tags;
-
-                    //Article message Queue 
-                    var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.PublisherDone };
-                    ArticleNotification(message);
-                    _logger.LogInformation($"Article Notification message Publisher added.");
-
-                    await SaveArticleUser(role, userId, article.Id);
-
-                }
-
-                _context.Entry(model).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException ex)
             {
-                if (!ArticleExists(id))
-                {
-                    _logger.LogError($"Articlde id {id} not found ");
-
-                    return NotFound();
-                }
-                else
-                {
-                    _logger.LogError(ex, $"Articlde id {id} not found ");
-                    throw;
-                }
+                _logger.LogError(ex, $"Articlde id {id} not found ");
+                return BadRequest();
             }
 
             return NoContent();
@@ -214,11 +121,6 @@ namespace NewsStacks.API.Controllers
 
         // POST: api/Article
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        /// <summary>
-        /// Save article, only writer can save 
-        /// </summary>
-        /// <param name="article"></param>
-        /// <returns>article</returns>
         [HttpPost]
         public async Task<ActionResult<Article>> PostArticle(ArticleDTO articleDTO)
         {
@@ -231,37 +133,10 @@ namespace NewsStacks.API.Controllers
                 var userId = User.FindFirst("Id").Value;
 
                 var article = _mapper.Map<Article>(articleDTO);
-
                 if (Convert.ToInt32(role) == (int)RoleType.Writer)
                 {
-                    article.ReviewerDone = false;
-                    article.PublishDone = false;
-                    article.Active = true;
-                    article.WriteDone = true;
-                    if (article.IsDraft)
-                    {
-                        article.WriteDone = false;
-                    }
-                    article.CreatedDate = DateTime.UtcNow;
-                    article.UpdateDate = DateTime.UtcNow;
-                    article.PublishedDate = null;
-
-                    _context.Articles.Add(article);
-                    await _context.SaveChangesAsync();
-
+                    article = await _service.Create(article, role, userId);
                     _logger.LogInformation($"Article saved.");
-
-                    //Save user information in Article role table 
-                    await SaveArticleUser(role, userId, article.Id);
-
-                    //Article message Queue 
-                    if (!article.IsDraft)
-                    {
-                        var message = new ArticleMessage { Id = article.Id, Title = article.Title, MessageType = MessageType.WriterDone };
-                        ArticleNotification(message);
-                        _logger.LogInformation($"Article Notification message added.");
-                    }
-
                 }
                 else
                 {
@@ -281,58 +156,21 @@ namespace NewsStacks.API.Controllers
             }
         }
 
-        private async Task SaveArticleUser(string role, string userId, int articleId)
-        {
-            var userRole = _context.UserRoles.Where(x => x.UserId == Convert.ToInt32(userId) && x.RoleId == Convert.ToInt32(role)).FirstOrDefault();
-
-            if (userRole != null)
-            {
-                var articleUser = new ArticleUser
-                {
-                    ArticleId = articleId,
-                    UserRoleId = userRole.Id,
-                    CreatedDate = DateTime.UtcNow,
-                    UpdatedDate = DateTime.UtcNow
-                };
-
-                _context.ArticleUsers.Add(articleUser);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"Article Role {userRole.Id} saved.");
-
-            };
-        }
-
-        private static void ArticleNotification(ArticleMessage message)
-        {
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse("UseDevelopmentStorage=true");
-            CloudQueueClient queueClient = storageAccount.CreateCloudQueueClient();
-            CloudQueue queue = queueClient.GetQueueReference("qa1");
-            queue.CreateIfNotExistsAsync();
-            string messsage = JsonSerializer.Serialize(message);
-            queue.AddMessageAsync(new CloudQueueMessage(messsage));
-        }
-
         // DELETE: api/Article/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteArticle(int id)
         {
-            var article = await _context.Articles.FindAsync(id);
-            if (article == null)
+            try
             {
-                return NotFound();
+                await _service.Delete(id);
+                return NoContent();
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Failed to delete article");
 
-            article.Active = false;
-            _context.Entry(article).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool ArticleExists(int id)
-        {
-            return _context.Articles.Any(e => e.Id == id);
+                return BadRequest();
+            }
         }
     }
 }

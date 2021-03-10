@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NewsStacks.Database\NewsStacks.Database.csproj" />
+    <ProjectReference Include="..\NewsStacks.DTOs\NewsStacks.DTOs.csproj" />
   </ItemGroup>
 
 </Project>

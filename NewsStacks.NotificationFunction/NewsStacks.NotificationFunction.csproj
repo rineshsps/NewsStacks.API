@@ -1,17 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AzureFunctionsVersion>v3</AzureFunctionsVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="4.0.4" />
+    <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage" Version="3.0.10" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.11" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\NewsStack.BusinessService\NewsStacks.BusinessService.csproj" />
-    <ProjectReference Include="..\NewsStacks.Database\NewsStacks.Database.csproj" />
     <ProjectReference Include="..\NewsStacks.DTOs\NewsStacks.DTOs.csproj" />
-    <ProjectReference Include="..\NewsStacks.Repositories\NewsStacks.Repositories.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">

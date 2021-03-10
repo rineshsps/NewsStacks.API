@@ -118,21 +118,14 @@ namespace NewsStacks.API.Controllers
             }
 
             user.Active = false;
-            _context.Users.Remove(user);
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool UserExists(int id)
-        {
-            return _context.Users.Any(e => e.Id == id);
-        }
-
         private string GenerateJSONWebToken(User user)
         {
-            //var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("passkeywordsdfgdsfgfdsg"));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
@@ -154,7 +147,7 @@ namespace NewsStacks.API.Controllers
             var token = new JwtSecurityToken(
                       issuer: "Issuer",
                       claims: claims,
-                      expires: DateTime.Now.AddMinutes(120),
+                      expires: DateTime.Now.AddMinutes(240),
                       signingCredentials: credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

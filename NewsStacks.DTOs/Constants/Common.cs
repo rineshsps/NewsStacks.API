@@ -2,6 +2,6 @@
 {
     public static class Common
     {
-        public static string queuename = "qa1";
+        public static string queuename = "mail-notification";
     }
 }

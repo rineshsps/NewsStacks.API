@@ -4,11 +4,11 @@ using NewsStacks.DTOs;
 using NewsStacks.DTOs.Enum;
 using System.Text.Json;
 
-namespace NewsStacks.Function
+namespace NewsStacks.NotificationFunction
 {
-    public static class Notifications
+    public static class MailNotification
     {
-        [FunctionName("Notifications")]
+        [FunctionName("MailNotification")]
         public static void Run([QueueTrigger("mail-notification", Connection = "AzureWebJobsStorage")] string myQueueItem, ILogger log)
         {
             try

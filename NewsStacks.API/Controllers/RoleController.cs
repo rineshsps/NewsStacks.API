@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using NewsStacks.BusinessService;
-using NewsStacks.Database.Models;
 using System;
 using System.Threading.Tasks;
 
@@ -13,17 +12,14 @@ namespace NewsStacks.API.Controllers
     [Authorize]
     public class RoleController : ControllerBase
     {
-        private readonly newsContext _context;
         private readonly ILogger<RoleController> _logger;
         private readonly IRoleService _service;
 
-        public RoleController(newsContext context, ILogger<RoleController> logger, IRoleService service)
+        public RoleController(ILogger<RoleController> logger, IRoleService service)
         {
-            _context = context;
             _logger = logger;
             _service = service;
         }
-
 
         // GET: api/Role
         [HttpGet]
@@ -41,6 +37,5 @@ namespace NewsStacks.API.Controllers
                 return BadRequest();
             }
         }
-
     }
 }

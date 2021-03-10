@@ -5,8 +5,6 @@ VisualStudioVersion = 16.0.31019.35
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewsStacks.API", "NewsStacks.API.csproj", "{5F5293BF-2C3E-435A-892B-C884838CA502}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewsStacks.Function", "..\Function\NewsStacks.Function.csproj", "{F3B8E897-7E30-4DD2-9045-D2DADC83D316}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewsStacks.BusinessService", "..\NewsStack.BusinessService\NewsStacks.BusinessService.csproj", "{6312CB81-7B4C-48F2-93D6-D088E004F924}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewsStacks.Repositories", "..\NewsStacks.Repositories\NewsStacks.Repositories.csproj", "{AA8106F2-4014-471B-8EA2-24159BC26EE1}"
@@ -21,6 +19,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewsStacks.UnitTests", "..\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{256453B5-AE7A-43C7-89AF-FD0112F861F1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewsStacks.NotificationFunction", "..\NewsStacks.NotificationFunction\NewsStacks.NotificationFunction.csproj", "{B8DFE8E0-A9F8-4F9D-AE1E-B576BB00688E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,10 +31,6 @@ Global
 		{5F5293BF-2C3E-435A-892B-C884838CA502}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F5293BF-2C3E-435A-892B-C884838CA502}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F5293BF-2C3E-435A-892B-C884838CA502}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F3B8E897-7E30-4DD2-9045-D2DADC83D316}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F3B8E897-7E30-4DD2-9045-D2DADC83D316}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F3B8E897-7E30-4DD2-9045-D2DADC83D316}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F3B8E897-7E30-4DD2-9045-D2DADC83D316}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6312CB81-7B4C-48F2-93D6-D088E004F924}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6312CB81-7B4C-48F2-93D6-D088E004F924}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6312CB81-7B4C-48F2-93D6-D088E004F924}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -59,6 +55,10 @@ Global
 		{9639EDAB-7F4B-4373-B9CB-2F17F9D9511F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9639EDAB-7F4B-4373-B9CB-2F17F9D9511F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9639EDAB-7F4B-4373-B9CB-2F17F9D9511F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8DFE8E0-A9F8-4F9D-AE1E-B576BB00688E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8DFE8E0-A9F8-4F9D-AE1E-B576BB00688E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8DFE8E0-A9F8-4F9D-AE1E-B576BB00688E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8DFE8E0-A9F8-4F9D-AE1E-B576BB00688E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

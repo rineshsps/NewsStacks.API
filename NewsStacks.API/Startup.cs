@@ -36,6 +36,8 @@ namespace NewsStacks.API
             //DI resolve
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IArticleService, ArticleService>();
+            services.AddScoped<IArticleRepository, ArticleRepository>();
 
             services.AddSwaggerGen(c =>
             {
